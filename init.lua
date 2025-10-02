@@ -93,13 +93,13 @@ vim.keymap.set("n", "<leader>fh", builtin.help_tags, { desc = "Help" })
 -- Treesitter (auto-install languages)
 -- ─────────────────────────────────────────────────────────────────────────────
 require("nvim-treesitter.configs").setup({
-  ensure_installed = { "lua", "python", "javascript" }, -- add more here
+  ensure_installed = { "lua", "python", "javascript" },
   highlight = { enable = true },
   indent = { enable = true },
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- LSP Keymaps (VSCode-like)
+-- LSP Keymaps
 -- ─────────────────────────────────────────────────────────────────────────────
 local on_attach = function(_, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
@@ -122,70 +122,68 @@ end
 local luasnip = require("luasnip")
 require("luasnip.loaders.from_vscode").lazy_load()
 
-require("mason").setup()  -- just once
+require("mason").setup()
 
 local cmp = require("cmp")
 cmp.setup({
-  snippet = {
-    expand = function(args)
-      luasnip.lsp_expand(args.body)
-    end,
-  },
+  snippet = { expand = function(args) luasnip.lsp_expand(args.body) end },
   mapping = {
     ["<Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_next_item()
-      elseif luasnip.expand_or_jumpable() then
-        luasnip.expand_or_jump()
-      else
-        fallback()
-      end
+      if cmp.visible() then cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then luasnip.expand_or_jump()
+      else fallback() end
     end, { "i", "s" }),
     ["<S-Tab>"] = cmp.mapping(function(fallback)
-      if cmp.visible() then
-        cmp.select_prev_item()
-      elseif luasnip.jumpable(-1) then
-        luasnip.jump(-1)
-      else
-        fallback()
-      end
+      if cmp.visible() then cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then luasnip.jump(-1)
+      else fallback() end
     end, { "i", "s" }),
     ["<CR>"] = cmp.mapping.confirm({ select = true }),
   },
-  sources = {
-    { name = "nvim_lsp" },
-    { name = "luasnip" },
-    { name = "buffer" },
-    { name = "path" },
-  },
+  sources = { { name = "nvim_lsp" }, { name = "luasnip" }, { name = "buffer" }, { name = "path" } },
 })
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
 require("mason-lspconfig").setup({
-  ensure_installed = {
-    "pyright",
-    "tsserver",
-  },
+  ensure_installed = { "pyright", "tsserver", "efm" },
 })
 
 local lspconfig = require("lspconfig")
 require("mason-lspconfig").setup_handlers({
   function(server_name)
-    lspconfig[server_name].setup({
-      capabilities = capabilities,
-      on_attach = on_attach,
-    })
+    lspconfig[server_name].setup({ capabilities = capabilities, on_attach = on_attach })
   end,
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- Mason Tool Installer (replacement for mason-null-ls)
+-- EFM (replacement for null-ls)
+-- ─────────────────────────────────────────────────────────────────────────────
+local efm_languages = {
+  python = { { formatCommand = "black --fast -", formatStdin = true } },
+  javascript = {
+    { lintCommand = "eslint_d -f unix --stdin --stdin-filename ${INPUT}", lintStdin = true, lintFormats = { "%f:%l:%c: %m" } },
+    { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true },
+  },
+  typescript = {
+    { lintCommand = "eslint_d -f unix --stdin --stdin-filename ${INPUT}", lintStdin = true, lintFormats = { "%f:%l:%c: %m" } },
+    { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true },
+  },
+}
+
+lspconfig.efm.setup({
+  on_attach = on_attach,
+  init_options = { documentFormatting = true, codeAction = true },
+  settings = { rootMarkers = { ".git/" }, languages = efm_languages },
+})
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Mason Tool Installer
 -- ─────────────────────────────────────────────────────────────────────────────
 require("mason-tool-installer").setup({
-  ensure_installed = { "black", "prettier", "eslint_d" },
-  auto_update = true,
+  ensure_installed = { "black", "prettier", "eslint_d", "efm-langserver" },
   run_on_start = true,
+  auto_update = true,
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -202,10 +200,7 @@ vim.keymap.set("n", "<leader>tt", ":ToggleTerm<CR>", { desc = "Toggle Terminal" 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Debugging (DAP)
 -- ─────────────────────────────────────────────────────────────────────────────
-require("mason-nvim-dap").setup({
-  ensure_installed = { "python", "node2" },
-  automatic_installation = true,
-})
+require("mason-nvim-dap").setup({ ensure_installed = { "python", "node2" }, automatic_installation = true })
 
 local dap = require("dap")
 local dapui = require("dapui")
