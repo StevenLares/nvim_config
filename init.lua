@@ -101,7 +101,7 @@ require("nvim-treesitter.configs").setup({
 -- ─────────────────────────────────────────────────────────────────────────────
 -- LSP Keymaps
 -- ─────────────────────────────────────────────────────────────────────────────
-local on_attach = function(_, bufnr)
+local on_attach = function(client, bufnr)
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
   vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
@@ -114,7 +114,28 @@ local on_attach = function(_, bufnr)
   vim.keymap.set("n", "<leader>f", function()
     vim.lsp.buf.format({ async = true })
   end, opts)
+
+  -- ─────────────── Autoformat on save ───────────────
+  if client.supports_method("textDocument/formatting") then
+    vim.api.nvim_create_autocmd("BufWritePre", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.buf.format({ async = false })
+      end,
+    })
+  end
+
+  -- ─────────────── Lint on save ───────────────
+  if client.name == "efm" then
+    vim.api.nvim_create_autocmd("BufWritePost", {
+      buffer = bufnr,
+      callback = function()
+        vim.lsp.buf.diagnostics() -- updates linting diagnostics
+      end,
+    })
+  end
 end
+
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- LSP + Completion + Snippets
@@ -161,14 +182,8 @@ require("mason-lspconfig").setup_handlers({
 -- ─────────────────────────────────────────────────────────────────────────────
 local efm_languages = {
   python = { { formatCommand = "black --fast -", formatStdin = true } },
-  javascript = {
-    { lintCommand = "eslint_d -f unix --stdin --stdin-filename ${INPUT}", lintStdin = true, lintFormats = { "%f:%l:%c: %m" } },
-    { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true },
-  },
-  typescript = {
-    { lintCommand = "eslint_d -f unix --stdin --stdin-filename ${INPUT}", lintStdin = true, lintFormats = { "%f:%l:%c: %m" } },
-    { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true },
-  },
+  javascript = { { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true } },
+  typescript = { { formatCommand = "prettier --stdin-filepath ${INPUT}", formatStdin = true } },
 }
 
 lspconfig.efm.setup({
