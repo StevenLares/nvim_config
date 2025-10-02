@@ -99,9 +99,48 @@ cmp.setup({
 })
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
--- example LSPs:
-lspconfig.pyright.setup({ capabilities = capabilities })
-lspconfig.tsserver.setup({ capabilities = capabilities })
+
+lspconfig.pyright.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+lspconfig.tsserver.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- LSP Keymaps (VSCode-like)
+-- ─────────────────────────────────────────────────────────────────────────────
+local on_attach = function(_, bufnr)
+  local opts = { noremap = true, silent = true, buffer = bufnr }
+
+  -- Go to definition / declaration
+  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+  vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+
+  -- Hover documentation
+  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+
+  -- Signature help (parameter hints)
+  vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+
+  -- Rename symbol
+  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+
+  -- Code actions (quick fixes)
+  vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+
+  -- List references
+  vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+
+  -- Format file
+  vim.keymap.set("n", "<leader>f", function()
+    vim.lsp.buf.format({ async = true })
+  end, opts)
+end
+
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Git Signs
