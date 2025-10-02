@@ -12,6 +12,17 @@ vim.opt.rtp:prepend(lazypath)
 -- Plugins
 -- ─────────────────────────────────────────────────────────────────────────────
 require("lazy").setup({
+
+  -- Mason core (already present in dap deps but explicitly add for clarity)
+  { "williamboman/mason.nvim" },
+
+  -- Mason <-> LSP bridge
+  { "williamboman/mason-lspconfig.nvim" },
+
+  -- Mason <-> linters/formatters (null-ls)
+  { "jay-babu/mason-null-ls.nvim" },
+  { "jose-elias-alvarez/null-ls.nvim" },
+
   -- Colors
   { "morhetz/gruvbox" },
 
@@ -88,12 +99,45 @@ require("nvim-treesitter.configs").setup({
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- LSP Keymaps (VSCode-like)
+-- ─────────────────────────────────────────────────────────────────────────────
+local on_attach = function(_, bufnr)
+  local opts = { noremap = true, silent = true, buffer = bufnr }
+
+  -- Go to definition / declaration
+  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
+  vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+
+  -- Hover documentation
+  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+
+  -- Signature help (parameter hints)
+  vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
+
+  -- Rename symbol
+  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
+
+  -- Code actions (quick fixes)
+  vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
+
+  -- List references
+  vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
+
+  -- Format file
+  vim.keymap.set("n", "<leader>f", function()
+    vim.lsp.buf.format({ async = true })
+  end, opts)
+end
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- LSP + Completion + Snippets (LuaSnip + friendly-snippets)
 -- ─────────────────────────────────────────────────────────────────────────────
-local lspconfig = require("lspconfig")
 
 local luasnip = require("luasnip")
 require("luasnip.loaders.from_vscode").lazy_load()  -- load VSCode-style snippets
+require("mason").setup()
+
 
 local cmp = require("cmp")
 
@@ -137,47 +181,47 @@ cmp.setup({
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-lspconfig.pyright.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
+-- Ask Mason-LSP to install & configure these servers automatically
+require("mason-lspconfig").setup({
+  ensure_installed = {
+    "pyright",
+    "tsserver",
+    -- add "gopls", "clangd", etc. here
+  },
 })
 
-lspconfig.tsserver.setup({
-  capabilities = capabilities,
-  on_attach = on_attach,
+local lspconfig = require("lspconfig")
+
+-- Automatic handler for each server
+require("mason-lspconfig").setup_handlers({
+  function(server_name)
+    lspconfig[server_name].setup({
+      capabilities = capabilities,
+      on_attach = on_attach,
+    })
+  end,
 })
 
--- ─────────────────────────────────────────────────────────────────────────────
--- LSP Keymaps (VSCode-like)
--- ─────────────────────────────────────────────────────────────────────────────
-local on_attach = function(_, bufnr)
-  local opts = { noremap = true, silent = true, buffer = bufnr }
+local null_ls = require("null-ls")
 
-  -- Go to definition / declaration
-  vim.keymap.set("n", "gd", vim.lsp.buf.definition, opts)
-  vim.keymap.set("n", "gD", vim.lsp.buf.declaration, opts)
+-- List your formatters/linters here
+local sources = {
+  null_ls.builtins.formatting.black,
+  null_ls.builtins.formatting.prettier,
+  null_ls.builtins.diagnostics.eslint_d,
+  -- add more as needed
+}
 
-  -- Hover documentation
-  vim.keymap.set("n", "K", vim.lsp.buf.hover, opts)
+-- Ask Mason to install them automatically
+require("mason-null-ls").setup({
+  ensure_installed = { "black", "prettier", "eslint_d" },
+  automatic_installation = true,
+})
 
-  -- Signature help (parameter hints)
-  vim.keymap.set("n", "<C-k>", vim.lsp.buf.signature_help, opts)
-
-  -- Rename symbol
-  vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)
-
-  -- Code actions (quick fixes)
-  vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, opts)
-
-  -- List references
-  vim.keymap.set("n", "gr", vim.lsp.buf.references, opts)
-
-  -- Format file
-  vim.keymap.set("n", "<leader>f", function()
-    vim.lsp.buf.format({ async = true })
-  end, opts)
-end
-
+null_ls.setup({
+  sources = sources,
+  on_attach = on_attach,
+})
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Git Signs
@@ -193,7 +237,6 @@ vim.keymap.set("n", "<leader>tt", ":ToggleTerm<CR>", { desc = "Toggle Terminal" 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Debugging (DAP)
 -- ─────────────────────────────────────────────────────────────────────────────
-require("mason").setup()
 require("mason-nvim-dap").setup({
   ensure_installed = { "python", "node2" }, -- pick your adapters here
   automatic_installation = true,
