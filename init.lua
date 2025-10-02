@@ -31,7 +31,10 @@ require("lazy").setup({
   { "neovim/nvim-lspconfig" },
   { "hrsh7th/nvim-cmp" },
   { "hrsh7th/cmp-nvim-lsp" },
-  { "L3MON4D3/LuaSnip" },
+  {
+  "L3MON4D3/LuaSnip",
+  dependencies = { "rafamadriz/friendly-snippets" }
+  },
 
   -- Git signs
   { "lewis6991/gitsigns.nvim" },
@@ -85,18 +88,52 @@ require("nvim-treesitter.configs").setup({
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
--- LSP + Completion
+-- LSP + Completion + Snippets (LuaSnip + friendly-snippets)
 -- ─────────────────────────────────────────────────────────────────────────────
 local lspconfig = require("lspconfig")
+
+local luasnip = require("luasnip")
+require("luasnip.loaders.from_vscode").lazy_load()  -- load VSCode-style snippets
+
 local cmp = require("cmp")
+
 cmp.setup({
+  snippet = {
+    expand = function(args)
+      require("luasnip").lsp_expand(args.body)  -- enable snippet expansion
+    end,
+  },
   mapping = {
-    ["<Tab>"] = cmp.mapping.select_next_item(),
-    ["<S-Tab>"] = cmp.mapping.select_prev_item(),
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif require("luasnip").expand_or_jumpable() then
+        require("luasnip").expand_or_jump()
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
+    ["<S-Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif require("luasnip").jumpable(-1) then
+        require("luasnip").jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
     ["<CR>"] = cmp.mapping.confirm({ select = true }),
   },
-  sources = { { name = "nvim_lsp" } },
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "luasnip" }, -- add snippets to the completion menu
+    { name = "buffer" },
+    { name = "path" },
+  },
 })
+
 
 local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
