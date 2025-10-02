@@ -19,9 +19,8 @@ require("lazy").setup({
   -- Mason <-> LSP bridge
   { "williamboman/mason-lspconfig.nvim" },
 
-  -- Mason <-> linters/formatters (null-ls)
-  { "jay-babu/mason-null-ls.nvim" },
-  { "jose-elias-alvarez/null-ls.nvim" },
+  -- CLI tool installer (replacement for mason-null-ls)
+  { "WhoIsSethDaniel/mason-tool-installer.nvim" },
 
   -- Colors
   { "morhetz/gruvbox" },
@@ -180,20 +179,13 @@ require("mason-lspconfig").setup_handlers({
   end,
 })
 
--- null-ls + mason-null-ls
-local null_ls = require("null-ls")
-require("mason-null-ls").setup({
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Mason Tool Installer (replacement for mason-null-ls)
+-- ─────────────────────────────────────────────────────────────────────────────
+require("mason-tool-installer").setup({
   ensure_installed = { "black", "prettier", "eslint_d" },
-  automatic_installation = true,
-})
-
-null_ls.setup({
-  sources = {
-    null_ls.builtins.formatting.black,
-    null_ls.builtins.formatting.prettier,
-    null_ls.builtins.diagnostics.eslint_d,
-  },
-  on_attach = on_attach,
+  auto_update = true,
+  run_on_start = true,
 })
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -233,20 +225,16 @@ vim.keymap.set("n", "<leader>B", function() dap.set_breakpoint(vim.fn.input("Bre
 vim.keymap.set("n", "<leader>dr", function() dap.repl.open() end, { desc = "Open DAP REPL" })
 vim.keymap.set("n", "<leader>dl", function() dap.run_last() end, { desc = "Run Last Debug" })
 
-
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Auto-sync Lazy plugins on first install
 -- ─────────────────────────────────────────────────────────────────────────────
 vim.api.nvim_create_autocmd("User", {
-  pattern = "LazyDone", -- fires after Lazy finished bootstrapping
+  pattern = "LazyDone",
   once = true,
   callback = function()
-    -- Ensure all declared plugins are installed
     require("lazy").sync()
-
-    -- Also trigger Mason’s automatic installation hooks
-    require("mason-lspconfig").setup()    -- will install missing LSP servers
-    require("mason-null-ls").setup()      -- will install missing linters/formatters
-    require("mason-nvim-dap").setup()     -- will install missing DAP adapters
+    require("mason-lspconfig").setup()
+    require("mason-tool-installer").setup()
+    require("mason-nvim-dap").setup()
   end,
 })
