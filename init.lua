@@ -232,3 +232,21 @@ vim.keymap.set("n", "<leader>b", function() dap.toggle_breakpoint() end, { desc 
 vim.keymap.set("n", "<leader>B", function() dap.set_breakpoint(vim.fn.input("Breakpoint condition: ")) end)
 vim.keymap.set("n", "<leader>dr", function() dap.repl.open() end, { desc = "Open DAP REPL" })
 vim.keymap.set("n", "<leader>dl", function() dap.run_last() end, { desc = "Run Last Debug" })
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Auto-sync Lazy plugins on first install
+-- ─────────────────────────────────────────────────────────────────────────────
+vim.api.nvim_create_autocmd("User", {
+  pattern = "LazyDone", -- fires after Lazy finished bootstrapping
+  once = true,
+  callback = function()
+    -- Ensure all declared plugins are installed
+    require("lazy").sync()
+
+    -- Also trigger Mason’s automatic installation hooks
+    require("mason-lspconfig").setup()    -- will install missing LSP servers
+    require("mason-null-ls").setup()      -- will install missing linters/formatters
+    require("mason-nvim-dap").setup()     -- will install missing DAP adapters
+  end,
+})
