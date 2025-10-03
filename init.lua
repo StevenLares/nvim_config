@@ -14,7 +14,10 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
 
   -- Mason core
-  { "williamboman/mason.nvim" },
+  {
+    "mason-org/mason.nvim",
+    opts = {}
+  },
 
   -- Mason <-> LSP bridge
   { "williamboman/mason-lspconfig.nvim" },
