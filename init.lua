@@ -20,7 +20,14 @@ require("lazy").setup({
   },
 
   -- Mason <-> LSP bridge
-  { "williamboman/mason-lspconfig.nvim" },
+  {
+    "mason-org/mason-lspconfig.nvim",
+    opts = {},
+    dependencies = {
+        { "mason-org/mason.nvim", opts = {} },
+        "neovim/nvim-lspconfig",
+  },
+
 
   -- CLI tool installer (replacement for mason-null-ls)
   { "WhoIsSethDaniel/mason-tool-installer.nvim" },
