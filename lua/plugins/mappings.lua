@@ -5,15 +5,23 @@ return {
     opts = {
       mappings = {
         n = {
-          -- disable direct q to avoid accidental quit/record
+          -- Completely disable q to prevent accidental macro recording
           ["q"] = false,
 
-          -- Leader + 0 starts/stops macro recording (like qq)
+          -- Use <Leader>0 to toggle macro recording safely (records into @m)
           ["<Leader>0"] = {
             function()
-              vim.api.nvim_feedkeys("qq", "n", false)
+              if vim.fn.reg_recording() == "" then
+                -- Start recording into register m to avoid potential conflicts
+                vim.api.nvim_feedkeys("qm", "n", false)
+                vim.notify("⏺️ Started recording macro @m", vim.log.levels.INFO, { title = "Macro" })
+              else
+                -- Stop recording
+                vim.api.nvim_feedkeys("q", "n", false)
+                vim.notify("⏹️ Stopped recording macro", vim.log.levels.INFO, { title = "Macro" })
+              end
             end,
-            desc = "Start/stop macro recording (qq)",
+            desc = "Toggle macro recording (@m)",
           },
         },
       },
