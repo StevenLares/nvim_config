@@ -5,8 +5,6 @@ return {
     opts = {
       mappings = {
         n = {
-          -- Completely disable q to prevent accidental macro recording
-          ["q"] = false,
 
           -- Use <Leader>0 to toggle macro recording safely (records into @m)
           ["<Leader>0"] = {
