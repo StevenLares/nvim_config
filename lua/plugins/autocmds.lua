@@ -48,6 +48,21 @@ return {
             end,
           },
         },
+
+
+        -- 🧩 Add this new autocmd group:
+        terminal_keymaps = {
+          {
+            event = "TermOpen",
+            pattern = "term://*",
+            desc = "Custom terminal keymaps",
+            callback = function()
+              local opts = { buffer = 0 }
+              -- Use Ctrl-x to leave terminal mode safely
+              vim.keymap.set("t", "<C-x>", [[<C-\><C-n>]], opts)
+            end,
+          },
+        },
       },
     },
   },
