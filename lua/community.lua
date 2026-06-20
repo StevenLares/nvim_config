@@ -5,6 +5,19 @@
 ---@type LazySpec
 return {
   "AstroNvim/astrocommunity",
+
+  -- Testing
   { import = "astrocommunity.test.neotest" },
+
+  -- Interesting Themes
+  { import = "astrocommunity.colorscheme.eldritch-nvim" },
+  { import = "astrocommunity.colorscheme.bluloco-nvim" },
+
+  -- Typical themes
+  { import = "astrocommunity.colorscheme.tokyodark-nvim" },
+  { import = "astrocommunity.colorscheme.nordic-nvim" },
+  { import = "astrocommunity.colorscheme.monokai-pro-nvim" },
+  { import = "astrocommunity.colorscheme.kanagawa-nvim" },
+  { import = "astrocommunity.colorscheme.dracula-nvim" },
   -- ... import any community contributed plugins here
 }
