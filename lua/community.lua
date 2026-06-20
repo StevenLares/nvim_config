@@ -20,4 +20,5 @@ return {
   { import = "astrocommunity.colorscheme.kanagawa-nvim" },
   { import = "astrocommunity.colorscheme.dracula-nvim" },
   -- ... import any community contributed plugins here
+  -- And customize them in ~/.config/nvim/lua/plugins/user.lua using opts
 }
